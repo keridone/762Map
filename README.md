@@ -54,3 +54,37 @@
 可选
 
 1. 绑定邮箱
+
+# 762Map 开发环境
+
+- Gradle版本：gradle-8.13
+
+- jdk版本：jdk-17
+
+- Sdk版本：
+
+  ```
+  android {
+      namespace = "com.example.a762map"
+      compileSdk {
+          version = release(36)
+      }
+  
+      defaultConfig {
+          applicationId = "com.example.a762map"
+          minSdk = 30
+          targetSdk = 36
+          versionCode = 1
+          versionName = "1.0"
+  
+          testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+      }
+  ```
+
+- 其他信息：
+
+  ```
+  package com.example.a762map
+  ```
+
+  

@@ -14,6 +14,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.tvMain.text = "登录成功：这里是 762Map 主页面占位"
+        binding.tvMain.text = "登录成功：这里是 762Map 主页面占位xfytest"
     }
 }

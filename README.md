@@ -57,6 +57,7 @@
 
 # 762Map 开发环境
 
+- 编程语言：Kotlin
 - Gradle版本：gradle-8.13
 
 - jdk版本：jdk-17

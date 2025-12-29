@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/mapFragment">
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.example.a762map.ui.map.MapFragment"
+        android:label="首页">
+        <action
+            android:id="@+id/action_mapFragment_to_placeDetailFragment"
+            app:destination="@id/placeDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.a762map.ui.profile.ProfileFragment"
+        android:label="我的" />
+
+    <fragment
+        android:id="@+id/placeDetailFragment"
+        android:name="com.example.a762map.ui.place.PlaceDetailFragment"
+        android:label="地点详情" />
+</navigation>

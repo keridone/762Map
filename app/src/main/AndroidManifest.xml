@@ -49,6 +49,10 @@
             android:name=".ui.profile.ExportPdfActivity"
             android:exported="false" />
 
+        <activity android:name=".ui.profile.LoginActivity" android:exported="false"/>
+        <activity android:name=".ui.profile.RechargeActivity" android:exported="false"/>
+        <activity android:name=".ui.profile.EditProfileActivity" android:exported="false"/>
+        <activity android:name=".ui.profile.AdminUserManageActivity" android:exported="false"/>
 
 
     </application>

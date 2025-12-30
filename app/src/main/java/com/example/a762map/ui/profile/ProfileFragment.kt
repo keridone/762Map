@@ -1,11 +1,15 @@
 package com.example.a762map.ui.profile
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.amap.api.location.AMapLocation
 import com.example.a762map.R
 import com.example.a762map.databinding.FragmentProfileBinding
 import kotlinx.coroutines.Dispatchers
@@ -31,12 +35,10 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     private lateinit var db: AppDbHelper
     private lateinit var session: SessionManager
 
+    private lateinit var locationProvider: RescueLocationProvider
+
     // ========= 一键救援：收件人邮箱配置（你必须改成真实可用） =========
     private val ADMIN_EMAIL = "2463763422@qq.com"
-
-    // 建议新建“救援专用邮箱”，并使用“应用专用密码/授权码”
-    // Gmail: smtp.gmail.com:587 (STARTTLS)
-    // QQ: smtp.qq.com:587 (STARTTLS) 或 465(SSL)
     private val SMTP_HOST = "smtp.qq.com"
     private val SMTP_PORT = "587"
     private val SENDER_EMAIL = "2696973787@qq.com"
@@ -49,6 +51,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
         db = AppDbHelper(requireContext())
         session = SessionManager(requireContext())
+        locationProvider = RescueLocationProvider(requireContext().applicationContext)
 
         setupClicks()
         refreshUI()
@@ -61,7 +64,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun setupClicks() {
 
-        // ① 用户卡：游客 -> 登录；登录 -> 用户详情/修改信息
         binding.cardUser.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请先登录")
@@ -70,7 +72,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // 头像单独点击（登录后可做更换头像）
         binding.imgAvatar.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请先登录")
@@ -79,7 +80,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // ② 消息通知
         binding.cardMessage.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请先登录后查看消息")
@@ -88,12 +88,10 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             Toast.makeText(requireContext(), "消息通知页面尚未接入（请创建 MessageListActivity）", Toast.LENGTH_SHORT).show()
         }
 
-        // ③ 系统设置
         binding.cardSetting.setOnClickListener {
             Toast.makeText(requireContext(), "系统设置页面尚未接入（请创建 SettingsActivity）", Toast.LENGTH_SHORT).show()
         }
 
-        // ④ 足迹：游客拦截
         binding.cardFootprint.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请登录！")
@@ -102,7 +100,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // ⑤ 年度报告：游客拦截
         binding.cardReport.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请登录！")
@@ -111,8 +108,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // ⑥ VIP 专属：改为“一键救援”
-        // 卡片点击：如果你想卡片本身也触发救援，可保留；我这里让卡片点击只提示
         binding.cardVip.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请登录！")
@@ -131,7 +126,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // ✅ 一键救援按钮（必须在 fragment_profile.xml 里存在 btnRescue）
+        // ✅ 一键救援按钮：发送邮件 + 附带当前位置
         binding.btnRescue.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请先登录！")
@@ -151,11 +146,14 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 return@setOnClickListener
             }
 
-            // 开始发送
             binding.tvRescueStatus.text = "状态：发送中…"
             binding.btnRescue.isEnabled = false
 
             lifecycleScope.launch {
+                // 1) 先取定位（若无权限/失败则为 null）
+                val loc: AMapLocation? = withContext(Dispatchers.IO) { getCurrentLocationIfPermitted() }
+
+                // 2) 再发邮件（IO线程）
                 val ok = withContext(Dispatchers.IO) {
                     sendRescueEmail(
                         userName = u.username,
@@ -165,17 +163,17 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                         totalMileage = u.totalMileage,
                         yearMileage = u.yearMileage,
                         navCount = u.navCount,
-                        vipLevel = u.vipLevel
+                        vipLevel = u.vipLevel,
+                        location = loc
                     )
                 }
 
                 binding.btnRescue.isEnabled = true
-                binding.tvRescueStatus.text = if (ok) "状态：发送成功 ✅" else "状态：发送失败 ❌（检查网络/邮箱配置）"
+                binding.tvRescueStatus.text = if (ok) "状态：发送成功 ✅" else "状态：发送失败 ❌（检查网络/邮箱配置/定位权限）"
                 Toast.makeText(requireContext(), if (ok) "救援信息发送成功" else "救援信息发送失败", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 充值（普通用户可见）
         binding.btnRecharge.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请登录！")
@@ -184,7 +182,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // 修改个人信息（普通/VIP 可见）
         binding.btnEditProfile.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请登录！")
@@ -193,7 +190,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             }
         }
 
-        // 管理员：用户管理
         binding.btnAdminManage.setOnClickListener {
             if (!session.isLoggedIn()) {
                 goLogin("请登录！")
@@ -202,7 +198,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             startActivity(Intent(requireContext(), AdminUserManageActivity::class.java))
         }
 
-        // 退出登录
         binding.btnLogout.setOnClickListener {
             session.logout()
             Toast.makeText(requireContext(), "已退出登录", Toast.LENGTH_SHORT).show()
@@ -212,7 +207,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun refreshUI() {
         if (!session.isLoggedIn()) {
-            // ===== 游客状态 =====
             binding.tvUsername.text = "游客"
             binding.tvPhone.text = "点击登录"
             binding.tvTotalMileage.text = "--"
@@ -228,7 +222,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             binding.btnAdminManage.visibility = View.GONE
             binding.btnLogout.visibility = View.GONE
 
-            // 救援区：游客隐藏按钮/状态（或你也可以显示但点击就提示登录）
             binding.btnRescue.visibility = View.GONE
             binding.tvRescueStatus.visibility = View.GONE
             return
@@ -241,7 +234,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             return
         }
 
-        // ===== 已登录状态 =====
         binding.tvUsername.text = u.username
         binding.tvPhone.text = u.phone.maskPhone()
         binding.tvTotalMileage.text = "${format1(u.totalMileage)} km"
@@ -259,7 +251,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 binding.btnEditProfile.visibility = View.VISIBLE
                 binding.btnAdminManage.visibility = View.GONE
 
-                // 普通用户不显示救援按钮
                 binding.btnRescue.visibility = View.GONE
                 binding.tvRescueStatus.visibility = View.GONE
             }
@@ -272,7 +263,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 binding.btnEditProfile.visibility = View.VISIBLE
                 binding.btnAdminManage.visibility = View.GONE
 
-                // VIP 显示救援按钮
                 binding.btnRescue.visibility = View.VISIBLE
                 binding.tvRescueStatus.visibility = View.VISIBLE
                 binding.tvRescueStatus.text = "状态：未发送"
@@ -287,7 +277,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 binding.btnEditProfile.visibility = View.GONE
                 binding.btnAdminManage.visibility = View.VISIBLE
 
-                // 管理员不需要救援按钮（你也可以改成可用）
                 binding.btnRescue.visibility = View.GONE
                 binding.tvRescueStatus.visibility = View.GONE
             }
@@ -314,13 +303,22 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         return substring(0, 3) + "****" + substring(length - 4)
     }
 
-    private fun format1(v: Double): String {
-        return String.format("%.1f", v)
+    private fun format1(v: Double): String = String.format("%.1f", v)
+
+    /**
+     * 获取当前定位：无权限 -> null；失败 -> null
+     */
+    private suspend fun getCurrentLocationIfPermitted(): AMapLocation? {
+        val fine = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!fine && !coarse) return null
+
+        return locationProvider.getOnceLocation()
     }
 
     /**
-     * ✅ SMTP 实时发送救援邮件：收件人=【用户邮箱 + 管理员邮箱】
-     * 返回 true/false 用于 UI 显示发送成功/失败
+     * SMTP 实时发送救援邮件：收件人=【用户邮箱 + 管理员邮箱】
+     * 增强：包含当前位置（若获取失败则写明“未能获取”）
      */
     private fun sendRescueEmail(
         userName: String,
@@ -330,13 +328,16 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         totalMileage: Double,
         yearMileage: Double,
         navCount: Int,
-        vipLevel: Int
+        vipLevel: Int,
+        location: AMapLocation?
     ): Boolean {
         return try {
             if (userEmail.isBlank()) return false
 
             val now = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val subject = "【A762Map 一键救援】紧急求助 - $userName(${userPhone.maskPhone()})"
+
+            val locationBlock = buildLocationBlock(location)
 
             val body = """
                 【A762Map 一键救援系统 - 紧急求助邮件】
@@ -349,6 +350,9 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 - 手机号：$userPhone
                 - 用户邮箱：$userEmail
                 - 账号类型：VIP Lv.$vipLevel
+                
+                【当前位置（系统自动获取）】
+                $locationBlock
                 
                 【使用统计（辅助判断是否异常）】
                 - 总里程：${format1(totalMileage)} km
@@ -397,6 +401,38 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             e.printStackTrace()
             false
         }
+    }
+
+    private fun buildLocationBlock(loc: AMapLocation?): String {
+        if (loc == null) {
+            return "- 结果：未能获取当前位置（无权限/定位失败/超时）"
+        }
+
+        val lat = loc.latitude
+        val lng = loc.longitude
+        val acc = loc.accuracy
+        val provider = loc.provider ?: "unknown"
+        val addr = listOfNotNull(
+            loc.country, loc.province, loc.city, loc.district, loc.street, loc.streetNum, loc.aoiName
+        ).joinToString("")
+
+        val time = try {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(loc.time))
+        } catch (_: Exception) {
+            "unknown"
+        }
+
+        // 高德 Web 打开链接（仅文本；便于救援人员复制）
+        val amapLink = "https://uri.amap.com/marker?position=$lng,$lat&name=${java.net.URLEncoder.encode("求助位置", "UTF-8")}"
+
+        return """
+            - 坐标：$lat, $lng
+            - 精度：${acc}m
+            - 来源：$provider
+            - 时间：$time
+            - 地址：${if (addr.isBlank()) "（无地址信息）" else addr}
+            - 链接：$amapLink
+        """.trimIndent()
     }
 
     override fun onDestroyView() {

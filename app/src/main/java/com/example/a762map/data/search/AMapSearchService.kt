@@ -1,18 +1,22 @@
 package com.example.a762map.data.search
 
 import android.content.Context
-import com.amap.api.services.core.AMapException
 import com.amap.api.services.core.LatLonPoint
 import com.amap.api.services.help.Inputtips
 import com.amap.api.services.help.InputtipsQuery
+import com.amap.api.services.help.Inputtips.InputtipsListener
 import com.amap.api.services.help.Tip
+import com.amap.api.services.poisearch.PoiResult
 import com.amap.api.services.poisearch.PoiSearch
-import com.amap.api.services.poisearch.PoiSearch.Query
+import com.amap.api.services.route.DriveRouteResult
+import com.amap.api.services.route.RouteSearch
 
-class AMapSearchService(private val appContext: Context) {
+class AMapSearchService(
+    private val appContext: Context
+) {
 
     /**
-     * 输入提示（联想）
+     * 输入提示（搜索联想）
      */
     fun inputTips(
         keyword: String,
@@ -24,27 +28,19 @@ class AMapSearchService(private val appContext: Context) {
             return
         }
 
-        val query = InputtipsQuery(keyword, city).apply {
-            // 只有 city 有值才限制城市；否则不限制，避免搜不到
-            cityLimit = !city.isNullOrBlank()
+        // ✅ 1. 使用 InputtipsQuery
+        val query = InputtipsQuery(keyword, city ?: "").apply {
+            // 可选配置（不写也行）
+            cityLimit = true      // 限制在当前城市
         }
 
+        // ✅ 2. 正确构造 Inputtips
         val inputTips = Inputtips(appContext, query)
-        inputTips.setInputtipsListener { tipList, rCode ->
-            android.util.Log.d(
-                "MapSearch",
-                "inputTips keyword=$keyword city=$city cityLimit=${query.cityLimit} rCode=$rCode size=${tipList?.size ?: 0}"
-            )
 
-            tipList?.take(5)?.forEach { t ->
-                android.util.Log.d(
-                    "MapSearch",
-                    "tip name=${t.name} district=${t.district} point=${t.point} poiId=${t.poiID}"
-                )
-            }
-
-            if (rCode == AMapException.CODE_AMAP_SUCCESS && !tipList.isNullOrEmpty()) {
-                callback(tipList)
+        // ✅ 3. 设置监听并异步请求
+        inputTips.setInputtipsListener { tips, rCode ->
+            if (rCode == 1000) {
+                callback(tips ?: emptyList())
             } else {
                 callback(emptyList())
             }
@@ -55,7 +51,7 @@ class AMapSearchService(private val appContext: Context) {
 
 
     /**
-     * POI 搜索兜底：当 Tip 没有坐标时，取第一个 POI 的位置
+     * POI 搜索：取第一条结果（用于 Tip 没坐标时兜底）
      */
     fun searchFirstPoi(
         keyword: String,
@@ -63,41 +59,83 @@ class AMapSearchService(private val appContext: Context) {
         around: LatLonPoint?,
         callback: (lat: Double?, lng: Double?, title: String?, snippet: String?) -> Unit
     ) {
-        val query = Query(keyword, "", city).apply {
-            pageNum = 1
+        if (keyword.isBlank()) {
+            callback(null, null, null, null)
+            return
+        }
+
+        val query = PoiSearch.Query(keyword, "", city ?: "").apply {
             pageSize = 10
+            pageNum = 0
         }
 
         val poiSearch = PoiSearch(appContext, query)
 
-        // 如果有当前位置，优先用“周边搜索”提高命中
+        // 有当前位置则做周边检索更准
         if (around != null) {
-            poiSearch.bound = PoiSearch.SearchBound(around, 3000) // 3km 可按需调整
+            poiSearch.bound = PoiSearch.SearchBound(around, 30000) // 30km
         }
 
         poiSearch.setOnPoiSearchListener(object : PoiSearch.OnPoiSearchListener {
-            override fun onPoiSearched(result: com.amap.api.services.poisearch.PoiResult?, rCode: Int) {
-                if (rCode == AMapException.CODE_AMAP_SUCCESS && result != null) {
-                    val first = result.pois?.firstOrNull()
-                    val p = first?.latLonPoint
-                    if (p != null) {
-                        callback(
-                            p.latitude,
-                            p.longitude,
-                            first.title,
-                            first.snippet
-                        )
-                        return
-                    }
+            override fun onPoiSearched(result: PoiResult?, rCode: Int) {
+                val first = result?.pois?.firstOrNull()
+                val point = first?.latLonPoint
+                if (point != null) {
+                    callback(point.latitude, point.longitude, first.title, first.snippet)
+                } else {
+                    callback(null, null, null, null)
                 }
-                callback(null, null, null, null)
             }
 
-            override fun onPoiItemSearched(item: com.amap.api.services.core.PoiItem?, rCode: Int) {
-                // 本需求不使用单个 poiId 查询，可留空
+            override fun onPoiItemSearched(poiItem: com.amap.api.services.core.PoiItem?, rCode: Int) {
+                // 不使用
             }
         })
 
         poiSearch.searchPOIAsyn()
+    }
+
+    /**
+     * 驾车路径规划：返回用于绘制的折线点集合
+     */
+    fun driveRoute(
+        start: LatLonPoint,
+        end: LatLonPoint,
+        callback: (List<LatLonPoint>) -> Unit
+    ) {
+        val routeSearch = RouteSearch(appContext)
+
+        val fromAndTo = RouteSearch.FromAndTo(start, end)
+        val query = RouteSearch.DriveRouteQuery(
+            fromAndTo,
+            0,      // 默认策略；后续可扩展
+            null,
+            null,
+            ""
+        )
+
+        routeSearch.setRouteSearchListener(object : RouteSearch.OnRouteSearchListener {
+            override fun onDriveRouteSearched(result: DriveRouteResult?, rCode: Int) {
+                val path = result?.paths?.firstOrNull()
+                if (path == null) {
+                    callback(emptyList())
+                    return
+                }
+
+                val points = mutableListOf<LatLonPoint>()
+                val steps = path.steps ?: emptyList()
+                for (step in steps) {
+                    val poly = step.polyline ?: continue
+                    points.addAll(poly)
+                }
+                callback(points)
+            }
+
+            override fun onBusRouteSearched(result: com.amap.api.services.route.BusRouteResult?, rCode: Int) = Unit
+            override fun onWalkRouteSearched(result: com.amap.api.services.route.WalkRouteResult?, rCode: Int) = Unit
+            override fun onRideRouteSearched(result: com.amap.api.services.route.RideRouteResult?, rCode: Int) = Unit
+        })
+
+        routeSearch.calculateDriveRouteAsyn(query)
     }
 }

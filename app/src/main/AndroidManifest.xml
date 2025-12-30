@@ -6,9 +6,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <!-- 定位（Android 6+ 需要运行时授权） -->
+    <!-- 定位 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- NEW：相机（拍照打卡） -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:name=".A762MapApp"
@@ -17,15 +20,23 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.A762Map">
 
-        <!-- 高德 Key（来自 manifestPlaceholders） -->
         <meta-data
             android:name="com.amap.api.v2.apikey"
             android:value="${AMAP_API_KEY}" />
 
-        <!-- 定位服务（AMapLocationClient 会用到） -->
         <service android:name="com.amap.api.location.APSService" />
 
-        <!-- 启动入口：以 main 为准 -->
+        <!-- NEW：FileProvider（给 TakePicture 输出 Uri 用） -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">
@@ -35,7 +46,6 @@
             </intent-filter>
         </activity>
 
-        <!-- “我的”相关子页面：只保留你项目里确实存在的 Activity -->
         <activity
             android:name=".ui.profile.UserDetailActivity"
             android:exported="false" />
@@ -53,7 +63,6 @@
         <activity android:name=".ui.profile.RechargeActivity" android:exported="false"/>
         <activity android:name=".ui.profile.EditProfileActivity" android:exported="false"/>
         <activity android:name=".ui.profile.AdminUserManageActivity" android:exported="false"/>
-
 
     </application>
 </manifest>

@@ -22,5 +22,61 @@
             android:text="导航"
             android:layout_marginTop="16dp" />
 
+        <!-- 地点打卡栏 -->
+        <LinearLayout
+            android:id="@+id/checkin_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@android:drawable/dialog_holo_light_frame">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="地点打卡"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+
+                <ImageButton
+                    android:id="@+id/btn_checkin_pick"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="从相册上传"
+                    android:background="?android:selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_gallery" />
+
+                <ImageButton
+                    android:id="@+id/btn_checkin_camera"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="拍照打卡"
+                    android:background="?android:selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_camera" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_checkin_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="还没有打卡照片，点击右侧按钮上传或拍照。"
+                android:textSize="13sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_checkins"
+                android:layout_width="match_parent"
+                android:layout_height="96dp"
+                android:layout_marginTop="10dp" />
+
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

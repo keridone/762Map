@@ -15,34 +15,50 @@
             android:textSize="22sp"
             android:textStyle="bold"/>
 
+        <!-- ===== 头像区域（新功能）===== -->
+        <ImageView
+            android:id="@+id/imgAvatarPreview"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_avatar_default"
+            android:scaleType="centerCrop"/>
+
+        <Button
+            android:id="@+id/btnChangeAvatar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="更换头像"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"/>
+
+        <!-- ===== 基本信息 ===== -->
         <EditText
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:hint="用户名"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="16dp"/>
 
         <EditText
             android:id="@+id/etPhone"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:hint="手机号"
-            android:layout_marginTop="10dp"/>
+            android:hint="手机号"/>
 
         <EditText
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:hint="邮箱"
-            android:layout_marginTop="10dp"/>
+            android:hint="邮箱"/>
 
         <EditText
             android:id="@+id/etPassword"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:hint="密码"
-            android:inputType="textPassword"
-            android:layout_marginTop="10dp"/>
+            android:inputType="textPassword"/>
 
         <Button
             android:id="@+id/btnSave"

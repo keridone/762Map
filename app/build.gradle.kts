@@ -50,7 +50,7 @@ android {
 
 dependencies {
     // 高德地图
-    implementation("com.amap.api:3dmap:10.0.600")
+    implementation("com.amap.api:navi-3dmap-location-search:10.1.600_3dmap10.1.600_loc6.5.1_sea9.7.4")
 
     // UI / AndroidX
     implementation("com.google.android.material:material:1.12.0")

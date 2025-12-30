@@ -1,0 +1,98 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="管理员 - 用户管理"
+            android:textSize="22sp"
+            android:textStyle="bold"/>
+
+        <RadioGroup
+            android:id="@+id/rgFilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp">
+            <RadioButton
+                android:id="@+id/rbAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="全部"/>
+
+            <RadioButton
+                android:id="@+id/rbNormal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="普通"/>
+
+            <RadioButton
+                android:id="@+id/rbVip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VIP"/>
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/tvList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="(用户列表显示在这里)"
+            android:layout_marginTop="10dp"/>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="#DDDDDD" android:layout_marginTop="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="添加 / 修改用户（手动输入）"
+            android:layout_marginTop="12dp"
+            android:textStyle="bold"/>
+
+        <EditText android:id="@+id/etId" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="用户ID（新增留空，修改/删除填ID）" android:layout_marginTop="8dp"/>
+
+        <EditText android:id="@+id/etName" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="用户名" android:layout_marginTop="8dp"/>
+
+        <EditText android:id="@+id/etPhone" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="手机号" android:layout_marginTop="8dp"/>
+
+        <EditText android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="邮箱" android:layout_marginTop="8dp"/>
+
+        <EditText android:id="@+id/etPwd" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="密码" android:inputType="textPassword" android:layout_marginTop="8dp"/>
+
+        <EditText android:id="@+id/etRole" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="角色：normal / vip" android:layout_marginTop="8dp"/>
+
+        <EditText android:id="@+id/etVipLevel" android:layout_width="match_parent" android:layout_height="48dp"
+            android:hint="VIP等级（0/1/2...）" android:layout_marginTop="8dp"/>
+
+        <Button android:id="@+id/btnAdd" android:layout_width="match_parent" android:layout_height="48dp"
+            android:text="新增用户" android:layout_marginTop="12dp"/>
+
+        <Button android:id="@+id/btnUpdate" android:layout_width="match_parent" android:layout_height="48dp"
+            android:text="修改用户（按ID）" android:layout_marginTop="10dp"/>
+
+        <Button android:id="@+id/btnDelete" android:layout_width="match_parent" android:layout_height="48dp"
+            android:text="删除用户（按ID）" android:layout_marginTop="10dp"/>
+
+        <Button android:id="@+id/btnDeleteAllVip" android:layout_width="match_parent" android:layout_height="48dp"
+            android:text="批量删除全部 VIP 用户"
+            android:backgroundTint="#F44336"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+</ScrollView>

@@ -1,155 +1,162 @@
 package com.example.a762map.ui.profile
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.a762map.R
+import com.example.a762map.databinding.FragmentProfileBinding
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
-    private lateinit var tvUsername: TextView
-    private lateinit var tvPhone: TextView
-    private lateinit var tvTotalMileage: TextView
-    private lateinit var tvNavCount: TextView
-    private lateinit var tvYearMileage: TextView
+    private var _binding: FragmentProfileBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var db: AppDbHelper
+    private lateinit var session: SessionManager
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentProfileBinding.bind(view)
 
-        // 绑定控件
-        tvUsername = view.findViewById(R.id.tvUsername)
-        tvPhone = view.findViewById(R.id.tvPhone)
-        tvTotalMileage = view.findViewById(R.id.tvTotalMileage)
-        tvNavCount = view.findViewById(R.id.tvNavCount)
-        tvYearMileage = view.findViewById(R.id.tvYearMileage)
+        db = AppDbHelper(requireContext())
+        session = SessionManager(requireContext())
 
-        val cardUser = view.findViewById<View>(R.id.cardUser)
-        val cardFoot = view.findViewById<View>(R.id.cardFootprint)
-        val cardReport = view.findViewById<View>(R.id.cardReport)
-        val cardVip = view.findViewById<View>(R.id.cardVip)
+        setupClicks()
+    }
 
-        // 1) 刷新页面显示（根据当前用户状态）
-        render()
+    override fun onResume() {
+        super.onResume()
+        refreshUI()
+    }
 
-        // 2) 点击：用户信息白框 -> 跳转子页面
-        cardUser.setOnClickListener {
-            startActivity(Intent(requireContext(), UserDetailActivity::class.java))
-        }
-
-        // 3) 点击：足迹
-        cardFoot.setOnClickListener {
-            if (UserSession.isGuest(requireContext())) {
-                toast("请登录！")
+    private fun setupClicks() {
+        // 头像/用户卡
+        binding.cardUser.setOnClickListener {
+            if (!session.isLoggedIn()) {
+                goLogin("请登录！")
             } else {
-                startActivity(Intent(requireContext(), FootprintActivity::class.java))
+                startActivity(Intent(requireContext(), UserDetailActivity::class.java))
             }
         }
 
-        // 4) 点击：年度报告
-        cardReport.setOnClickListener {
-            if (UserSession.isGuest(requireContext())) {
-                toast("请登录！")
-            } else {
-                startActivity(Intent(requireContext(), YearReportActivity::class.java))
-            }
+        binding.cardFootprint.setOnClickListener {
+            if (!session.isLoggedIn()) goLogin("请登录！")
+            else startActivity(Intent(requireContext(), FootprintActivity::class.java))
         }
 
-        // 5) 点击：VIP专属导出PDF
-        cardVip.setOnClickListener {
-            if (UserSession.isVip(requireContext())) {
+        binding.cardReport.setOnClickListener {
+            if (!session.isLoggedIn()) goLogin("请登录！")
+            else startActivity(Intent(requireContext(), YearReportActivity::class.java))
+        }
+
+        binding.cardVip.setOnClickListener {
+            if (!session.isLoggedIn()) {
+                goLogin("请登录！")
+                return@setOnClickListener
+            }
+            val u = db.getUserById(session.getUserId()) ?: return@setOnClickListener
+            if (u.role != "vip") {
+                Toast.makeText(requireContext(), "请开启VIP！", Toast.LENGTH_SHORT).show()
+                // 普通用户点击VIP区 -> 去充值
+                startActivity(Intent(requireContext(), RechargeActivity::class.java))
+            } else {
                 startActivity(Intent(requireContext(), ExportPdfActivity::class.java))
-            } else {
-                toast("请开启VIP！")
             }
         }
 
-        // ✅（可选）你为了调试“三个用户切换”
-        // 长按用户名可切换：游客 -> 普通 -> VIP
-        tvUsername.setOnLongClickListener {
-            UserSession.cycleRole(requireContext())
-            render()
-            true
+        // 你需要在 fragment_profile.xml 增加两个按钮：
+        // btnEditProfile, btnLogout, 以及 admin按钮 btnAdminManage, 普通用户充值按钮 btnRecharge
+        binding.btnLogout.setOnClickListener {
+            session.logout()
+            Toast.makeText(requireContext(), "已退出登录", Toast.LENGTH_SHORT).show()
+            refreshUI()
+        }
+
+        binding.btnEditProfile.setOnClickListener {
+            if (!session.isLoggedIn()) goLogin("请登录！")
+            else startActivity(Intent(requireContext(), EditProfileActivity::class.java))
+        }
+
+        binding.btnRecharge.setOnClickListener {
+            if (!session.isLoggedIn()) goLogin("请登录！")
+            else startActivity(Intent(requireContext(), RechargeActivity::class.java))
+        }
+
+        binding.btnAdminManage.setOnClickListener {
+            if (!session.isLoggedIn()) goLogin("请登录！")
+            else startActivity(Intent(requireContext(), AdminUserManageActivity::class.java))
         }
     }
 
-    private fun render() {
-        val ctx = requireContext()
-        val role = UserSession.getRole(ctx)
+    private fun refreshUI() {
+        if (!session.isLoggedIn()) {
+            // 游客 UI
+            binding.tvUsername.text = "游客"
+            binding.tvPhone.text = "点击登录"
+            binding.tvTotalMileage.text = "--"
+            binding.tvNavCount.text = "导航次数\n--"
+            binding.tvYearMileage.text = "年度里程\n--"
 
-        if (role == Role.GUEST) {
-            tvUsername.text = "用户"
-            tvPhone.text = "游客（未登录）"
-            tvTotalMileage.text = "--"
-            tvNavCount.text = "导航次数\n--"
-            tvYearMileage.text = "年度里程\n--"
-        } else {
-            // 这里用模拟数据，你接入 Room 后从数据库读即可
-            val u = UserSession.getUser(ctx)
-            tvUsername.text = if (role == Role.VIP) "${u.username}（VIP）" else u.username
-            tvPhone.text = maskPhone(u.phone)
+            binding.vipBadge.visibility = View.GONE
+            binding.btnRecharge.visibility = View.GONE
+            binding.btnEditProfile.visibility = View.GONE
+            binding.btnLogout.visibility = View.GONE
+            binding.btnAdminManage.visibility = View.GONE
+            return
+        }
 
-            tvTotalMileage.text = "${u.totalMileageKm}km"
-            tvNavCount.text = "导航次数\n${u.navCount}次"
-            tvYearMileage.text = "年度里程\n${u.yearMileageKm}km"
+        val u = db.getUserById(session.getUserId()) ?: run {
+            session.logout()
+            refreshUI()
+            return
+        }
+
+        binding.tvUsername.text = u.username
+        binding.tvPhone.text = u.phone.maskPhone()
+        binding.tvTotalMileage.text = "${u.totalMileage}km"
+        binding.tvNavCount.text = "导航次数\n${u.navCount}次"
+        binding.tvYearMileage.text = "年度里程\n${u.yearMileage}km"
+
+        binding.btnLogout.visibility = View.VISIBLE
+
+        when (u.role) {
+            "normal" -> {
+                binding.vipBadge.visibility = View.GONE
+                binding.btnRecharge.visibility = View.VISIBLE
+                binding.btnEditProfile.visibility = View.VISIBLE
+                binding.btnAdminManage.visibility = View.GONE
+            }
+            "vip" -> {
+                binding.vipBadge.visibility = View.VISIBLE
+                binding.vipBadge.text = "VIP Lv.${u.vipLevel}"
+                binding.btnRecharge.visibility = View.GONE
+                binding.btnEditProfile.visibility = View.VISIBLE
+                binding.btnAdminManage.visibility = View.GONE
+            }
+            "admin" -> {
+                binding.vipBadge.visibility = View.VISIBLE
+                binding.vipBadge.text = "管理员"
+                binding.btnRecharge.visibility = View.GONE
+                binding.btnEditProfile.visibility = View.GONE
+                binding.btnAdminManage.visibility = View.VISIBLE
+            }
         }
     }
 
-    private fun maskPhone(phone: String): String {
-        if (phone.length < 7) return phone
-        return phone.substring(0, 3) + "****" + phone.substring(phone.length - 4)
-    }
-
-    private fun toast(msg: String) {
+    private fun goLogin(msg: String) {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-    }
-}
-
-/** ====== 下面是“游客/普通/VIP”切换的最小会话层（你之后可替换为 Room） ====== */
-enum class Role { GUEST, NORMAL, VIP }
-
-data class SimpleUser(
-    val username: String,
-    val phone: String,
-    val totalMileageKm: Double,
-    val yearMileageKm: Int,
-    val navCount: Int
-)
-
-object UserSession {
-    private const val SP = "a762_session"
-    private const val KEY_ROLE = "role"
-
-    fun getRole(ctx: Context): Role {
-        val sp = ctx.getSharedPreferences(SP, Context.MODE_PRIVATE)
-        val v = sp.getString(KEY_ROLE, Role.GUEST.name) ?: Role.GUEST.name
-        return runCatching { Role.valueOf(v) }.getOrDefault(Role.GUEST)
+        startActivity(Intent(requireContext(), LoginActivity::class.java))
     }
 
-    fun isGuest(ctx: Context) = getRole(ctx) == Role.GUEST
-    fun isVip(ctx: Context) = getRole(ctx) == Role.VIP
-
-    fun cycleRole(ctx: Context) {
-        val next = when (getRole(ctx)) {
-            Role.GUEST -> Role.NORMAL
-            Role.NORMAL -> Role.VIP
-            Role.VIP -> Role.GUEST
-        }
-        ctx.getSharedPreferences(SP, Context.MODE_PRIVATE)
-            .edit().putString(KEY_ROLE, next.name).apply()
-        Toast.makeText(ctx, "已切换为：${next.name}", Toast.LENGTH_SHORT).show()
+    private fun String.maskPhone(): String {
+        if (length < 7) return this
+        return substring(0, 3) + "****" + substring(length - 4)
     }
 
-    fun getUser(ctx: Context): SimpleUser {
-        // 先给你一套模拟用户数据（后面替换成 Room 查询）
-        return when (getRole(ctx)) {
-            Role.VIP -> SimpleUser("许飞扬", "18512345678", 9.7, 2, 3)
-            Role.NORMAL -> SimpleUser("张扬", "18598765432", 4.2, 1, 1)
-            Role.GUEST -> SimpleUser("用户", "00000000000", 0.0, 0, 0)
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

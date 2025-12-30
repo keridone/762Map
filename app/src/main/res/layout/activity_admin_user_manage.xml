@@ -15,12 +15,14 @@
             android:textSize="22sp"
             android:textStyle="bold"/>
 
+        <!-- ===== 筛选 ===== -->
         <RadioGroup
             android:id="@+id/rgFilter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="10dp">
+
             <RadioButton
                 android:id="@+id/rbAll"
                 android:layout_width="wrap_content"
@@ -48,51 +50,133 @@
             android:text="(用户列表显示在这里)"
             android:layout_marginTop="10dp"/>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="#DDDDDD" android:layout_marginTop="12dp"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginTop="12dp"/>
 
+        <!-- ===== 基本信息 ===== -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="添加 / 修改用户（手动输入）"
-            android:layout_marginTop="12dp"
-            android:textStyle="bold"/>
+            android:text="添加 / 修改用户"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"/>
 
-        <EditText android:id="@+id/etId" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="用户ID（新增留空，修改/删除填ID）" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etId"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="用户ID（修改/删除/统计用）"
+            android:layout_marginTop="8dp"/>
 
-        <EditText android:id="@+id/etName" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="用户名" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="用户名"/>
 
-        <EditText android:id="@+id/etPhone" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="手机号" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etPhone"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="手机号"/>
 
-        <EditText android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="邮箱" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="邮箱"/>
 
-        <EditText android:id="@+id/etPwd" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="密码" android:inputType="textPassword" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etPwd"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="密码"
+            android:inputType="textPassword"/>
 
-        <EditText android:id="@+id/etRole" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="角色：normal / vip" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etRole"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="角色：normal / vip / admin"/>
 
-        <EditText android:id="@+id/etVipLevel" android:layout_width="match_parent" android:layout_height="48dp"
-            android:hint="VIP等级（0/1/2...）" android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/etVipLevel"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="VIP等级（0/1/2...）"/>
 
-        <Button android:id="@+id/btnAdd" android:layout_width="match_parent" android:layout_height="48dp"
-            android:text="新增用户" android:layout_marginTop="12dp"/>
+        <!-- ===== 统计字段（新功能）===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="统计数据（管理员可改）"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"/>
 
-        <Button android:id="@+id/btnUpdate" android:layout_width="match_parent" android:layout_height="48dp"
-            android:text="修改用户（按ID）" android:layout_marginTop="10dp"/>
+        <EditText
+            android:id="@+id/etTotalMileage"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="总里程 (km)"
+            android:inputType="numberDecimal"/>
 
-        <Button android:id="@+id/btnDelete" android:layout_width="match_parent" android:layout_height="48dp"
-            android:text="删除用户（按ID）" android:layout_marginTop="10dp"/>
+        <EditText
+            android:id="@+id/etYearMileage"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="年度里程 (km)"
+            android:inputType="numberDecimal"/>
 
-        <Button android:id="@+id/btnDeleteAllVip" android:layout_width="match_parent" android:layout_height="48dp"
-            android:text="批量删除全部 VIP 用户"
+        <EditText
+            android:id="@+id/etNavCount"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="导航次数"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/etLitCities"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="点亮城市数"
+            android:inputType="number"/>
+
+        <!-- ===== 操作按钮 ===== -->
+        <Button
+            android:id="@+id/btnAdd"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="新增用户"
+            android:layout_marginTop="12dp"/>
+
+        <Button
+            android:id="@+id/btnUpdate"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="修改用户（基本信息）"/>
+
+        <Button
+            android:id="@+id/btnUpdateStats"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="仅更新统计数据"/>
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="删除用户"/>
+
+        <Button
+            android:id="@+id/btnDeleteAllVip"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="批量删除 VIP"
             android:backgroundTint="#F44336"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="10dp"/>
+            android:textColor="#FFFFFF"/>
 
     </LinearLayout>
 </ScrollView>

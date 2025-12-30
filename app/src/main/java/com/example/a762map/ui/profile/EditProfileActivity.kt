@@ -22,9 +22,12 @@ class EditProfileActivity : AppCompatActivity() {
         val uid = session.getUserId()
         val u = db.getUserById(uid)
         if (u == null) {
-            toast("请先登录"); finish(); return
+            toast("请先登录")
+            finish()
+            return
         }
 
+        // 回显
         binding.etUsername.setText(u.username)
         binding.etPhone.setText(u.phone)
         binding.etEmail.setText(u.email)
@@ -35,19 +38,24 @@ class EditProfileActivity : AppCompatActivity() {
             val phone = binding.etPhone.text.toString().trim()
             val email = binding.etEmail.text.toString().trim()
             val pwd = binding.etPassword.text.toString().trim()
+
             if (name.isEmpty() || phone.isEmpty() || email.isEmpty() || pwd.isEmpty()) {
-                toast("请完整填写"); return@setOnClickListener
+                toast("请完整填写")
+                return@setOnClickListener
             }
 
             val ok = try {
                 db.updateUserSelf(uid, name, phone, email, pwd)
-            } catch (e: Exception) {
+            } catch (ex: Exception) {
                 false
             }
+
             if (ok) {
                 toast("保存成功")
                 finish()
-            } else toast("保存失败：手机号/邮箱可能重复")
+            } else {
+                toast("保存失败：手机号/邮箱可能重复")
+            }
         }
     }
 
